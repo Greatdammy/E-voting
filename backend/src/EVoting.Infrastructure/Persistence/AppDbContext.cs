@@ -14,7 +14,6 @@ public class AppDbContext : DbContext
     public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<Vote> Votes => Set<Vote>();
     public DbSet<VoterElectionStatus> VoterElectionStatuses => Set<VoterElectionStatus>();
-    public DbSet<OtpToken> OtpTokens => Set<OtpToken>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

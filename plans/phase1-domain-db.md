@@ -1,6 +1,13 @@
 # Phase 1 — Domain Entities + EF Core AppDbContext + Initial Migration
 
-Status: PROPOSED — awaiting approval. No source files created yet.
+Status: IMPLEMENTED (see Phase 2 planning for an amendment).
+
+**Amendment (Phase 2 planning):** the OTP step was removed from the auth
+design, so the `OtpToken` entity, its EF configuration, and its `DbSet` on
+`AppDbContext` described below were deleted as unused. The migration had not
+been applied to a real database at that point, so this was a clean removal
+with no migration-history cleanup needed. Everything else in this document
+still reflects what was implemented.
 
 ## Goal
 Implement the seven Domain entities exactly as specified in CLAUDE.md's data

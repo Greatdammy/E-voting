@@ -5,9 +5,8 @@ Authoritative context for Claude Code. Read this fully before any task.
 ## What this is
 A web-based electronic voting system (NOUN PGD IT project, OBAFEMI EMMANUEL,
 NOU254200791). React.js SPA frontend + ASP.NET Core 8 Web API backend +
-SQL Server 2022. Voters authenticate with email + password + email OTP,
-receive a JWT, and cast one anonymised vote per election. Tallies stream
-live via SignalR.
+SQL Server 2022. Voters authenticate with email + password, receive a JWT,
+and cast one anonymised vote per election. Tallies stream live via SignalR.
 
 ## Non-negotiable workflow rules
 1. **Plan before implementing.** For any non-trivial task, produce a written
@@ -49,13 +48,12 @@ Frontend = React 18 + Vite SPA:
   UserId, NVARCHAR(64)), CandidateId (FK), VotedAt, VoteHash (NVARCHAR(64)).
   **UNIQUE (VoterId, ElectionId)** — DB-level one-vote-per-voter enforcement.
 - **VoterElectionStatus**: tracks whether a voter has voted in an election.
-- **OtpTokens**: hashed OTP, expiry, used flag.
 - **AuditLogs**: timestamp, UserId, action description.
 
 ## Security rules (treated as design requirements, not afterthoughts)
 - Passwords: BCrypt, work factor 12.
-- OTP: 6 digits, CSPRNG, stored hashed, 10-minute expiry, invalidated on use.
-- JWT: HMAC-SHA256, secret from env var, 8-hour expiry, carries UserId + role.
+- JWT: HMAC-SHA256, secret from env var, 8-hour expiry, carries UserId + role,
+  issued directly on successful login (email + password, no second factor).
 - Ballot anonymisation: store SHA-256(UserId) as VoterId, never the raw UserId.
 - Confirmation hash: derived from VoteId + ElectionId + server secret;
   verifiable, not reversible.
@@ -70,14 +68,14 @@ Frontend = React 18 + Vite SPA:
 | Method | Endpoint | Role | Purpose |
 |---|---|---|---|
 | POST | api/auth/register | Public | Register a voter |
-| POST | api/auth/login | Public | Authenticate, dispatch OTP |
-| POST | api/auth/verify-otp | Public | Verify OTP, issue JWT |
+| POST | api/auth/login | Public | Authenticate, issue JWT |
 | GET | api/elections | Voter | Eligible elections for the voter |
 | GET | api/elections/{id}/ballot | Voter | Ballot for an active election |
 | POST | api/elections/{id}/vote | Voter | Submit a vote |
 | GET | api/elections/{id}/results | Public | Current tally |
 | POST | api/admin/elections | Admin | Create an election |
 | (CRUD) | api/admin/elections/{id}/candidates | Admin | Manage candidates |
+| POST | api/admin/users | Admin | Create a user with a specified role (Officer/Admin provisioning) |
 
 ## Tech stack (pinned — do not drift)
 ASP.NET Core 8.0, EF Core 8, SQL Server 2022, BCrypt.Net-Next 4, JWT Bearer,

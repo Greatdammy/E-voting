@@ -36,19 +36,23 @@ expressed in `OnModelCreating`; migration generated but not applied.
 
 ---
 
-## Phase 2 — Auth module (register → OTP → JWT)
+## Phase 2 — Auth module (register → login → JWT)
 
 **Prompt:**
 > Plan first. Build the authentication slice end to end: AuthController with
-> register, login, verify-otp; an IAuthService in Application; BCrypt password
-> hashing (factor 12), CSPRNG 6-digit OTP hashed with 10-min expiry, JWT issued
-> on OTP verification (HMAC-SHA256, 8h, UserId + role claims). Wire SendGrid
-> behind an IEmailService for OTP delivery. Add FluentValidation validators and
-> the rate-limit policy (10/min/IP) on auth endpoints. Keep the JWT key and
-> SendGrid key in env vars.
+> register and login; an IAuthService in Application; BCrypt password hashing
+> (factor 12); JWT issued directly on successful login (HMAC-SHA256, 8h,
+> UserId + role claims — no second factor). Add FluentValidation validators
+> and the rate-limit policy (10/min/IP) on auth endpoints. Log register/login
+> attempts (success and failure) to AuditLogs. Seed a first Administrator
+> account from configuration and add an admin-only endpoint
+> (`POST api/admin/users`) to create further Officer/Administrator users.
+> Keep the JWT key in env vars.
 
-**Acceptance:** Registration rejects duplicate emails; OTP is single-use and
-expires; a valid JWT is returned only after correct OTP; no secrets in source.
+**Acceptance:** Registration rejects duplicate emails; a valid JWT is
+returned only after correct email + password; audit log entries are written
+for register/login attempts; the seeded admin can create further users via
+the admin endpoint; no secrets in source.
 
 ---
 
@@ -87,13 +91,13 @@ redirects to login before any API call; results chart updates live.
 
 **Prompt:**
 > Plan first. Add xUnit + Moq unit tests for AuthService and VoteService
-> (mock repositories) and an integration test covering register → verify-otp →
-> vote → results. Add Jest + React Testing Library tests for the OTP form and
-> the voting flow. Apply HSTS + HTTPS redirection middleware and confirm CORS,
-> auth, authorisation, and rate-limit ordering in the pipeline.
+> (mock repositories) and an integration test covering register → login →
+> vote → results. Add Jest + React Testing Library tests for the login form
+> and the voting flow. Apply HSTS + HTTPS redirection middleware and confirm
+> CORS, auth, authorisation, and rate-limit ordering in the pipeline.
 
-**Acceptance:** Tests pass; double-vote and expired-OTP cases are covered;
-middleware order matches the security design.
+**Acceptance:** Tests pass; double-vote and invalid-credentials cases are
+covered; middleware order matches the security design.
 
 ---
 
