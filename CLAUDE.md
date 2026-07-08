@@ -81,12 +81,15 @@ Frontend = React 18 + Vite SPA:
 ASP.NET Core 8.0, EF Core 8, SQL Server 2022, BCrypt.Net-Next 4, JWT Bearer,
 SignalR 8, SendGrid v3, FluentValidation, xUnit + Moq. React 18.2, Vite 5,
 Redux Toolkit 2.2, Axios 1.6, Tailwind CSS / Material UI, Recharts,
-Jest + React Testing Library.
+Vitest + React Testing Library.
 
 ## Testing expectations
 - Backend: xUnit + Moq. Unit-test services in isolation (mock repositories).
   Integration-test the auth → vote → tally chain.
-- Frontend: Jest + React Testing Library for components and the voting flow.
+- Frontend: Vitest + React Testing Library for components and the voting
+  flow (Vitest chosen over Jest since this is a Vite project — Vitest
+  reuses Vite's own transform pipeline with no extra config, where Jest
+  would need additional babel plugins just to parse `import.meta.env`).
 - Reference UAT target from the report: full voting workflow under 5 minutes,
   unassisted.
 

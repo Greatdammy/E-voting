@@ -1,3 +1,4 @@
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.RateLimiting;
 using EVoting.API.Hubs;
@@ -35,12 +36,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Read lazily (not into a variable above builder.Build()) so
+        // WebApplicationFactory-based integration tests, which inject
+        // config overrides as part of intercepting Build(), are seen here.
+        // An eager read above would capture the pre-override value instead.
+        var jwtKey = builder.Configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -71,6 +76,20 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureHttpsDefaults(https =>
+    {
+        https.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -79,7 +98,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHsts();
+}
 
+// Pipeline order below is deliberate, not incidental: CORS must run before
+// the rate limiter and auth middleware (a preflight request needs a CORS
+// decision before anything else inspects it), and Authentication must run
+// before Authorization (authorization decisions need the ClaimsPrincipal
+// authentication establishes). Reordering this without knowing why breaks
+// the security model silently rather than with an obvious error.
 app.UseHttpsRedirection();
 
 app.UseCors("Frontend");
@@ -101,3 +130,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program
+{
+}
