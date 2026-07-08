@@ -33,12 +33,18 @@ dotnet user-secrets set "Jwt:Key" "<value>"
 dotnet user-secrets set "ConnectionStrings:Default" "<value>"
 dotnet user-secrets set "SeedAdmin:Email" "<value>"
 dotnet user-secrets set "SeedAdmin:Password" "<value>"
+dotnet user-secrets set "Voting:ConfirmationSecret" "<value>"
 ```
 
 `SeedAdmin:Email`/`SeedAdmin:Password` seed the first Administrator account
 on startup (idempotent — skipped once any Administrator exists). That admin
 can then create further Officer/Administrator accounts via
 `POST api/admin/users`.
+
+`Voting:ConfirmationSecret` is the HMAC key used to derive each vote's
+confirmation hash (from VoteId + ElectionId) — verifiable by recomputing it
+with the same secret, but not reversible, and deliberately excludes which
+candidate was chosen.
 
 `SendGrid:ApiKey` is not currently used (no email-sending feature exists
 yet) — set it only if/when a feature needs it.

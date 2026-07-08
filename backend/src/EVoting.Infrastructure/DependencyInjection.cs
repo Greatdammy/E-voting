@@ -21,6 +21,13 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+        services.AddScoped<IElectionRepository, ElectionRepository>();
+        services.AddScoped<ICandidateRepository, CandidateRepository>();
+        services.AddScoped<IVoteRepository, VoteRepository>();
+        services.AddScoped<IVoterElectionStatusRepository, VoterElectionStatusRepository>();
+        services.AddScoped<IVoterAnonymizer, Sha256VoterAnonymizer>();
+        services.AddScoped<IConfirmationHashService, ConfirmationHashService>();
+
         return services;
     }
 }

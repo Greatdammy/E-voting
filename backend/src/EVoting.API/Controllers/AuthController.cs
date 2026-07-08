@@ -78,12 +78,12 @@ public class AuthController : ControllerBase
         return modelState;
     }
 
-    private IActionResult MapError(AuthError error, string? message)
+    private IActionResult MapError(AppError error, string? message)
     {
         return error switch
         {
-            AuthError.DuplicateEmail => Conflict(new { message }),
-            AuthError.InvalidCredentials => Unauthorized(new { message }),
+            AppError.DuplicateEmail => Conflict(new { message }),
+            AppError.InvalidCredentials => Unauthorized(new { message }),
             _ => BadRequest(new { message })
         };
     }

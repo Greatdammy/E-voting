@@ -1,5 +1,6 @@
 using System.Text;
 using System.Threading.RateLimiting;
+using EVoting.API.Hubs;
 using EVoting.Application;
 using EVoting.Application.Interfaces;
 using EVoting.Infrastructure;
@@ -20,6 +21,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IResultsBroadcaster, ResultsBroadcaster>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -74,6 +78,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ResultsHub>("/hubs/results");
 
 using (var scope = app.Services.CreateScope())
 {

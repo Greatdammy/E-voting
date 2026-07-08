@@ -36,7 +36,7 @@ public class AuthService : IAuthService
         {
             await _auditLogService.LogAsync(null, $"Registration failed: duplicate email ({request.Email})");
             await _unitOfWork.SaveChangesAsync();
-            return Result<RegisterResponseDto>.Failure(AuthError.DuplicateEmail, "A user with this email already exists.");
+            return Result<RegisterResponseDto>.Failure(AppError.DuplicateEmail, "A user with this email already exists.");
         }
 
         var user = new User
@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         {
             await _auditLogService.LogAsync(user?.UserId, $"Login failed: invalid credentials ({request.Email})");
             await _unitOfWork.SaveChangesAsync();
-            return Result<LoginResponseDto>.Failure(AuthError.InvalidCredentials, "Invalid email or password.");
+            return Result<LoginResponseDto>.Failure(AppError.InvalidCredentials, "Invalid email or password.");
         }
 
         var jwt = _jwtTokenService.GenerateToken(user.UserId, user.Role);
@@ -90,7 +90,7 @@ public class AuthService : IAuthService
         {
             await _auditLogService.LogAsync(createdByUserId, $"Admin user creation failed: duplicate email ({request.Email})");
             await _unitOfWork.SaveChangesAsync();
-            return Result<CreateUserResponseDto>.Failure(AuthError.DuplicateEmail, "A user with this email already exists.");
+            return Result<CreateUserResponseDto>.Failure(AppError.DuplicateEmail, "A user with this email already exists.");
         }
 
         var role = Enum.Parse<UserRole>(request.Role, ignoreCase: true);
