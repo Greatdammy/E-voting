@@ -9,8 +9,12 @@ frontend/dist/
 frontend/.vite/
 
 # Secrets / local config — never commit real values
+# (.env.development etc. without ".local" are committed on purpose —
+# they hold non-secret defaults like the local API origin, per Vite's
+# own convention: https://vitejs.dev/guide/env-and-mode)
 .env
-.env.*
+.env.local
+.env.*.local
 appsettings.Development.json
 appsettings.Local.json
 

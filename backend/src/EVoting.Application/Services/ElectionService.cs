@@ -46,6 +46,12 @@ public class ElectionService : IElectionService
         return Result<ElectionResponseDto>.Success(ToElectionResponseDto(election));
     }
 
+    public async Task<Result<List<ElectionResponseDto>>> ListElectionsAsync()
+    {
+        var elections = await _electionRepository.ListAsync();
+        return Result<List<ElectionResponseDto>>.Success(elections.Select(ToElectionResponseDto).ToList());
+    }
+
     public async Task<Result<List<ElectionSummaryDto>>> GetElectionsForVoterAsync(Guid voterId)
     {
         var elections = await _electionRepository.ListAsync();

@@ -80,6 +80,13 @@ public class AdminController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Value);
     }
 
+    [HttpGet("elections")]
+    public async Task<IActionResult> ListElections()
+    {
+        var result = await _electionService.ListElectionsAsync();
+        return result.Succeeded ? Ok(result.Value) : MapError(result.Error, result.ErrorMessage);
+    }
+
     [HttpGet("elections/{electionId:guid}/candidates")]
     public async Task<IActionResult> ListCandidates(Guid electionId)
     {

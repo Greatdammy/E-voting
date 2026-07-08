@@ -77,7 +77,7 @@ ballot anonymisation verified (no raw UserId in Votes).
 **Prompt:**
 > Plan first. Build the React SPA: an Axios instance with a JWT request
 > interceptor; a Redux auth slice (token, role, expiry); a ProtectedRoute
-> wrapper; and pages for Register, Login + OTP, Election list, Ballot, and a
+> wrapper; and pages for Register, Login, Election list, Ballot, and a
 > live Results dashboard. The Results page opens a SignalR connection and
 > updates a Recharts bar chart on each vote message. Add an Admin area to create
 > elections and manage candidates, guarded by role. Style with Tailwind.
