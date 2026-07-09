@@ -1,6 +1,10 @@
 import { useState } from 'react';
+import { CheckCircle2, Mail, ShieldPlus, User } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import { extractErrorMessage } from '../../api/extractErrorMessage';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
 
 const roles = ['Voter', 'ElectionOfficer', 'Administrator'];
 
@@ -34,54 +38,50 @@ export default function AdminCreateUserPage() {
   };
 
   return (
-    <div className="p-6 max-w-sm space-y-4">
-      <h1 className="text-2xl font-semibold">Create User</h1>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          placeholder="Full name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded px-3 py-2"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded px-3 py-2"
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
-        >
-          {roles.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        {error && <p className="text-red-600">{error}</p>}
-        {success && <p className="text-green-600">{success}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-indigo-600 text-white px-4 py-2 rounded w-full disabled:opacity-50"
-        >
-          {submitting ? 'Creating...' : 'Create user'}
-        </button>
-      </form>
+    <div className="mx-auto max-w-sm">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create user</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Provision an Officer or Administrator account.</p>
+      </div>
+
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input label="Full name" icon={User} type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          <Input label="Email" icon={Mail} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Role</span>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              {roles.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+          {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+          {success && (
+            <p className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4" />
+              {success}
+            </p>
+          )}
+          <Button type="submit" disabled={submitting} className="w-full">
+            <ShieldPlus className="h-4 w-4" />
+            {submitting ? 'Creating...' : 'Create user'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

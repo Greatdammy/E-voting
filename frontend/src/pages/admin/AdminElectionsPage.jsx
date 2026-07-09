@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CalendarPlus, ListChecks, Users2 } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import { extractErrorMessage } from '../../api/extractErrorMessage';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Spinner from '../../components/ui/Spinner';
 
 export default function AdminElectionsPage() {
   const [elections, setElections] = useState([]);
@@ -53,73 +59,83 @@ export default function AdminElectionsPage() {
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold mb-4">Create Election</h1>
-        <form onSubmit={handleCreate} className="space-y-3 max-w-md">
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded px-3 py-2"
-          />
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded px-3 py-2"
-          />
-          <label className="block text-sm text-gray-600">
-            Start date
-            <input
-              type="datetime-local"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
-          </label>
-          <label className="block text-sm text-gray-600">
-            End date
-            <input
-              type="datetime-local"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
-          </label>
-          {formError && <p className="text-red-600">{formError}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
-          >
-            {submitting ? 'Creating...' : 'Create election'}
-          </button>
-        </form>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Elections</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Create elections and manage their candidates.</p>
       </div>
 
+      <Card className="p-6">
+        <h2 className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <CalendarPlus className="h-4 w-4" />
+          Create election
+        </h2>
+        <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input label="Title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Description</span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={3}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </label>
+          </div>
+          <Input
+            label="Start date"
+            type="datetime-local"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+          <Input
+            label="End date"
+            type="datetime-local"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+          />
+          {formError && <p className="text-sm text-rose-600 dark:text-rose-400 sm:col-span-2">{formError}</p>}
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Creating...' : 'Create election'}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
       <div>
-        <h2 className="text-xl font-semibold mb-4">Elections</h2>
-        {loading && <p>Loading...</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <ListChecks className="h-4 w-4" />
+          All elections
+        </h2>
+        {loading && <Spinner label="Loading elections..." />}
+        {error && <p className="text-rose-600 dark:text-rose-400">{error}</p>}
+        {!loading && !error && elections.length === 0 && (
+          <Card className="p-8 text-center text-slate-500 dark:text-slate-400">No elections yet.</Card>
+        )}
         <ul className="space-y-2">
           {elections.map((election) => (
-            <li
-              key={election.electionId}
-              className="border border-gray-200 rounded p-4 flex items-center justify-between"
-            >
-              <div>
-                <p className="font-medium">{election.title}</p>
-                <p className="text-sm text-gray-500">{election.status}</p>
-              </div>
-              <Link to={`/admin/elections/${election.electionId}/candidates`} className="text-indigo-600 underline">
-                Manage candidates
-              </Link>
+            <li key={election.electionId}>
+              <Card className="flex items-center justify-between gap-4 p-4">
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white">{election.title}</p>
+                  <div className="mt-1">
+                    <Badge status={election.status} />
+                  </div>
+                </div>
+                <Link to={`/admin/elections/${election.electionId}/candidates`}>
+                  <Button variant="secondary">
+                    <Users2 className="h-4 w-4" />
+                    Manage candidates
+                  </Button>
+                </Link>
+              </Card>
             </li>
           ))}
         </ul>

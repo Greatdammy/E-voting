@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Pencil, Trash2, UserRoundPlus, Users } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import { extractErrorMessage } from '../../api/extractErrorMessage';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Spinner from '../../components/ui/Spinner';
 
 const emptyForm = { name: '', party: '', photoUrl: '' };
 
@@ -73,77 +78,83 @@ export default function AdminCandidatesPage() {
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold mb-4">{editingId ? 'Edit Candidate' : 'Add Candidate'}</h1>
-        <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
-          <input
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Candidates</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Only editable while the election is upcoming.
+        </p>
+      </div>
+
+      <Card className="p-6">
+        <h2 className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <UserRoundPlus className="h-4 w-4" />
+          {editingId ? 'Edit candidate' : 'Add candidate'}
+        </h2>
+        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+          <Input label="Name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          <Input
+            label="Party"
             type="text"
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-            className="w-full border border-gray-300 rounded px-3 py-2"
-          />
-          <input
-            type="text"
-            placeholder="Party"
             value={form.party}
             onChange={(e) => setForm({ ...form, party: e.target.value })}
             required
-            className="w-full border border-gray-300 rounded px-3 py-2"
           />
-          <input
-            type="text"
-            placeholder="Photo URL (optional)"
-            value={form.photoUrl}
-            onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-          />
-          {formError && <p className="text-red-600">{formError}</p>}
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
-            >
+          <div className="sm:col-span-2">
+            <Input
+              label="Photo URL (optional)"
+              type="text"
+              value={form.photoUrl}
+              onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
+            />
+          </div>
+          {formError && <p className="text-sm text-rose-600 dark:text-rose-400 sm:col-span-2">{formError}</p>}
+          <div className="flex gap-2 sm:col-span-2">
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Saving...' : editingId ? 'Save changes' : 'Add candidate'}
-            </button>
+            </Button>
             {editingId && (
-              <button type="button" onClick={cancelEdit} className="px-4 py-2 rounded border border-gray-300">
+              <Button type="button" variant="secondary" onClick={cancelEdit}>
                 Cancel
-              </button>
+              </Button>
             )}
           </div>
         </form>
-      </div>
+      </Card>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Candidates</h2>
-        {loading && <p>Loading...</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <Users className="h-4 w-4" />
+          Candidate list
+        </h2>
+        {loading && <Spinner label="Loading candidates..." />}
+        {error && <p className="text-rose-600 dark:text-rose-400">{error}</p>}
+        {!loading && !error && candidates.length === 0 && (
+          <Card className="p-8 text-center text-slate-500 dark:text-slate-400">No candidates yet.</Card>
+        )}
         <ul className="space-y-2">
           {candidates.map((candidate) => (
-            <li
-              key={candidate.candidateId}
-              className="border border-gray-200 rounded p-4 flex items-center justify-between"
-            >
-              <div>
-                <p className="font-medium">{candidate.name}</p>
-                <p className="text-sm text-gray-500">{candidate.party}</p>
-              </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => startEdit(candidate)} className="text-indigo-600 underline">
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(candidate.candidateId)}
-                  className="text-red-600 underline"
-                >
-                  Delete
-                </button>
-              </div>
+            <li key={candidate.candidateId}>
+              <Card className="flex items-center justify-between gap-4 p-4">
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white">{candidate.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{candidate.party}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="ghost" onClick={() => startEdit(candidate)} aria-label="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    onClick={() => handleDelete(candidate.candidateId)}
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
             </li>
           ))}
         </ul>
