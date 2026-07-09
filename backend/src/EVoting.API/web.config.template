@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <!-- %LAUNCHER_PATH% / %LAUNCHER_ARGS% are replaced by MSBuild TransformWebConfig on publish -->
+      <aspNetCore processPath="dotnet" arguments=".\EVoting.API.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <!-- Only variables the app actually reads (see Program.cs, DependencyInjection.cs,
+               ConfirmationHashService.cs, AdminSeeder.cs). Do not add keys the code doesn't
+               bind — they will silently no-op. -->
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+
+          <!-- Bound via configuration.GetConnectionString("Default") -->
+          <environmentVariable name="ConnectionStrings__Default" value="REPLACE_WITH_CONNECTION_STRING" />
+
+          <!-- Bound via configuration.GetValue<bool>("Database:AutoMigrate").
+               Applies already-committed, already-reviewed EF Core migrations
+               on startup. Keep "false" for normal deploys; set "true" only
+               for the deploy that ships a new migration, then flip back. -->
+          <environmentVariable name="Database__AutoMigrate" value="false" />
+
+          <!-- Bound via builder.Configuration["Jwt:Key" | "Jwt:Issuer" | "Jwt:Audience"] -->
+          <environmentVariable name="Jwt__Key" value="REPLACE_WITH_BASE64_JWT_KEY" />
+          <environmentVariable name="Jwt__Issuer" value="REPLACE_WITH_JWT_ISSUER" />
+          <environmentVariable name="Jwt__Audience" value="REPLACE_WITH_JWT_AUDIENCE" />
+
+          <!-- Bound via configuration["Voting:ConfirmationSecret"] (ConfirmationHashService) -->
+          <environmentVariable name="Voting__ConfirmationSecret" value="REPLACE_WITH_CONFIRMATION_SECRET" />
+
+          <!-- Bound via configuration["SeedAdmin:Email" | "SeedAdmin:Password"] (AdminSeeder) -->
+          <environmentVariable name="SeedAdmin__Email" value="REPLACE_WITH_ADMIN_EMAIL" />
+          <environmentVariable name="SeedAdmin__Password" value="REPLACE_WITH_ADMIN_PASSWORD" />
+        </environmentVariables>
+      </aspNetCore>
+      <!-- Required for SignalR WebSocket transport on IIS shared hosting -->
+      <webSocket enabled="true" />
+      <!-- Disable IIS Basic Auth prompt, force anonymous access so app-level JWT auth handles it -->
+      <security>
+        <authentication>
+          <anonymousAuthentication enabled="true" />
+          <basicAuthentication enabled="false" />
+          <windowsAuthentication enabled="false" />
+        </authentication>
+      </security>
+    </system.webServer>
+  </location>
+</configuration>

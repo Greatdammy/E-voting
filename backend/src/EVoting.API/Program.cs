@@ -9,6 +9,7 @@ using EVoting.Infrastructure.Persistence;
 using EVoting.Infrastructure.Persistence.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,6 +102,8 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // Pipeline order below is deliberate, not incidental: CORS must run before
@@ -126,6 +129,13 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    if (builder.Configuration.GetValue<bool>("Database:AutoMigrate"))
+    {
+        logger.LogInformation("Database:AutoMigrate is true - applying pending EF Core migrations.");
+        await context.Database.MigrateAsync();
+    }
+
     await AdminSeeder.SeedAdminAsync(context, passwordHasher, builder.Configuration, logger);
 }
 
