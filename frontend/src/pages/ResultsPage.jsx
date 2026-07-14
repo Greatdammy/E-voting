@@ -4,8 +4,10 @@ import { Radio, Trophy } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { createResultsConnection } from '../signalr/resultsConnection';
 import ResultsChart from '../components/ResultsChart';
+import TurnoutForecastCard from '../components/TurnoutForecastCard';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
+import { useTurnoutForecast } from '../hooks/useTurnoutForecast';
 
 function Leaderboard({ tally, totalVotes }) {
   const sorted = [...tally].sort((a, b) => b.voteCount - a.voteCount);
@@ -41,6 +43,13 @@ export default function ResultsPage() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [live, setLive] = useState(false);
+  const [endDate, setEndDate] = useState(null);
+  const { history, forecast } = useTurnoutForecast({
+    electionId: id,
+    totalVotes: results?.totalVotes,
+    status: results?.status,
+    endDate
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -57,6 +66,23 @@ export default function ResultsPage() {
           setError('Could not load results.');
         }
       });
+
+    // GET /elections is Voter-scoped and returns startDate/endDate; this
+    // results page itself is public. Best-effort only — an anonymous or
+    // non-voter viewer simply won't get a forecast card, since there's no
+    // other frontend-accessible source for the election's end date.
+    axiosInstance
+      .get('/elections')
+      .then((response) => {
+        if (!isMounted) {
+          return;
+        }
+        const match = response.data.find((election) => election.electionId === id);
+        if (match) {
+          setEndDate(match.endDate);
+        }
+      })
+      .catch(() => {});
 
     const connection = createResultsConnection();
     connection.on('ReceiveResults', (payload) => {
@@ -113,6 +139,10 @@ export default function ResultsPage() {
       <Card className="p-5">
         <ResultsChart tally={results.tally} />
       </Card>
+
+      {results.status === 'Active' && endDate && (
+        <TurnoutForecastCard history={history} forecast={forecast} endDate={endDate} />
+      )}
 
       <div>
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">

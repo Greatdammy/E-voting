@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { BarChart3, CalendarClock, CheckCircle2, Vote } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { extractErrorMessage } from '../api/extractErrorMessage';
+import { pruneStaleElections } from '../utils/turnoutHistory';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
@@ -16,7 +17,10 @@ export default function ElectionsPage() {
   useEffect(() => {
     axiosInstance
       .get('/elections')
-      .then((response) => setElections(response.data))
+      .then((response) => {
+        setElections(response.data);
+        pruneStaleElections(response.data.map((election) => election.electionId));
+      })
       .catch((err) => setError(extractErrorMessage(err, 'Could not load elections.')))
       .finally(() => setLoading(false));
   }, []);
