@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import NavBar from './components/NavBar';
+import HelpWidget from './components/HelpWidget';
 import ProtectedRoute from './routes/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <NavBar />
+      <HelpWidget />
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <Routes>
           <Route path="/" element={<Home />} />
