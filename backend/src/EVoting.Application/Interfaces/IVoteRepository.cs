@@ -7,4 +7,5 @@ public interface IVoteRepository
 {
     Task AddAsync(Vote vote);
     Task<List<CandidateTallyDto>> GetTallyAsync(Guid electionId);
+    Task<List<DateTime>> GetVoteTimestampsAsync(Guid electionId, DateTime sinceUtc);
 }

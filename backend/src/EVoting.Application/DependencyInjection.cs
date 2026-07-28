@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IElectionService, ElectionService>();
         services.AddScoped<ICandidateService, CandidateService>();
         services.AddScoped<IVoteService, VoteService>();
+        services.AddScoped<IIntegrityAlertService, IntegrityAlertService>();
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
         return services;

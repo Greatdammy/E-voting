@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Vote> Votes => Set<Vote>();
     public DbSet<VoterElectionStatus> VoterElectionStatuses => Set<VoterElectionStatus>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<IntegrityAlert> IntegrityAlerts => Set<IntegrityAlert>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

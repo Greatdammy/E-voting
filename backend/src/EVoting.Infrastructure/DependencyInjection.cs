@@ -1,4 +1,5 @@
 using EVoting.Application.Interfaces;
+using EVoting.Infrastructure.Monitoring;
 using EVoting.Infrastructure.Persistence;
 using EVoting.Infrastructure.Persistence.Repositories;
 using EVoting.Infrastructure.Security;
@@ -27,6 +28,10 @@ public static class DependencyInjection
         services.AddScoped<IVoterElectionStatusRepository, VoterElectionStatusRepository>();
         services.AddScoped<IVoterAnonymizer, Sha256VoterAnonymizer>();
         services.AddScoped<IConfirmationHashService, ConfirmationHashService>();
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IIntegrityAlertRepository, IntegrityAlertRepository>();
+        services.AddScoped<IIntegrityMonitoringService, IntegrityMonitoringService>();
 
         return services;
     }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { LogOut, Menu, Moon, ShieldCheck, Sun, UserPlus, Vote, X } from 'lucide-react';
+import { LogOut, Menu, Moon, ShieldCheck, Sparkles, Sun, UserPlus, Vote, X } from 'lucide-react';
 import { logout } from '../store/authSlice';
 import { useDarkMode } from '../hooks/useDarkMode';
 
@@ -36,8 +36,15 @@ export default function NavBar() {
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white">
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white">
             <Vote className="h-4 w-4" />
+            {/* Permanent, subtle cue that the platform has AI-assisted
+                features — fuchsia (the shared AI accent) so it never reads
+                as part of the indigo/violet brand mark itself. */}
+            <Sparkles
+              className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 rounded-full bg-white text-fuchsia-600 dark:bg-slate-950 dark:text-fuchsia-400"
+              aria-hidden="true"
+            />
           </span>
           E-Voting
         </Link>

@@ -10,6 +10,7 @@ import ResultsPage from './pages/ResultsPage';
 import AdminElectionsPage from './pages/admin/AdminElectionsPage';
 import AdminCandidatesPage from './pages/admin/AdminCandidatesPage';
 import AdminCreateUserPage from './pages/admin/AdminCreateUserPage';
+import AdminIntegrityPage from './pages/admin/AdminIntegrityPage';
 
 function Home() {
   const { token, role } = useSelector((state) => state.auth);
@@ -40,6 +41,7 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={['Administrator', 'ElectionOfficer']} />}>
             <Route path="/admin/elections" element={<AdminElectionsPage />} />
             <Route path="/admin/elections/:id/candidates" element={<AdminCandidatesPage />} />
+            <Route path="/admin/elections/:id/integrity" element={<AdminIntegrityPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['Administrator']} />}>

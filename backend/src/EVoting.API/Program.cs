@@ -1,6 +1,7 @@
 using System.Security.Authentication;
 using System.Text;
 using System.Threading.RateLimiting;
+using EVoting.API.BackgroundServices;
 using EVoting.API.Hubs;
 using EVoting.Application;
 using EVoting.Application.Interfaces;
@@ -26,6 +27,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IResultsBroadcaster, ResultsBroadcaster>();
+builder.Services.AddScoped<IIntegrityAlertBroadcaster, IntegrityAlertBroadcaster>();
+builder.Services.AddHostedService<IntegrityMonitorBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
@@ -56,6 +59,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        // SignalR can't attach an Authorization header to its WebSocket
+        // handshake, so it sends the JWT as an "access_token" query string
+        // parameter instead. ResultsHub stays anonymous (public results), so
+        // this only needs to apply to the role-restricted IntegrityHub path.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/integrity"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -123,6 +145,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ResultsHub>("/hubs/results");
+app.MapHub<IntegrityHub>("/hubs/integrity");
 
 using (var scope = app.Services.CreateScope())
 {

@@ -32,4 +32,13 @@ public class VoteRepository : IVoteRepository
             })
             .ToListAsync();
     }
+
+    public Task<List<DateTime>> GetVoteTimestampsAsync(Guid electionId, DateTime sinceUtc)
+    {
+        return _context.Votes
+            .Where(v => v.ElectionId == electionId && v.VotedAt >= sinceUtc)
+            .OrderBy(v => v.VotedAt)
+            .Select(v => v.VotedAt)
+            .ToListAsync();
+    }
 }

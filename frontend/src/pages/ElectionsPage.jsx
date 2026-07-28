@@ -1,13 +1,77 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, CalendarClock, CheckCircle2, Vote } from 'lucide-react';
+import { BarChart3, CalendarClock, CheckCircle2, Sparkles, Vote } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { extractErrorMessage } from '../api/extractErrorMessage';
 import { pruneStaleElections } from '../utils/turnoutHistory';
+import { useTurnoutForecast } from '../hooks/useTurnoutForecast';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
 import Button from '../components/ui/Button';
+
+function ElectionCard({ election }) {
+  // totalVotes is intentionally omitted — this page only reads whatever
+  // turnout history a prior visit to this election's Results page already
+  // stored locally (see useTurnoutForecast/turnoutHistory). No new fetch,
+  // no new backend call; the chip simply doesn't appear until that history
+  // exists.
+  const { forecast } = useTurnoutForecast({
+    electionId: election.electionId,
+    totalVotes: undefined,
+    status: election.status,
+    endDate: election.endDate
+  });
+
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-white">{election.title}</h2>
+          <p className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+            <CalendarClock className="h-3.5 w-3.5" />
+            {new Date(election.startDate).toLocaleDateString()} –{' '}
+            {new Date(election.endDate).toLocaleDateString()}
+          </p>
+        </div>
+        <Badge status={election.status} />
+      </div>
+
+      {election.hasVoted && (
+        <p className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="h-4 w-4" />
+          You voted
+        </p>
+      )}
+
+      {forecast && (
+        <p className="flex items-center gap-1.5 rounded-lg bg-fuchsia-100 px-2.5 py-1.5 text-xs font-medium text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-400">
+          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+          ~{forecast.projectedVotes.toLocaleString()} votes projected by close
+        </p>
+      )}
+
+      <div className="mt-auto flex gap-2">
+        {election.status === 'Active' && !election.hasVoted && (
+          <Link to={`/elections/${election.electionId}/ballot`} className="flex-1">
+            <Button className="w-full">
+              <Vote className="h-4 w-4" />
+              Vote
+            </Button>
+          </Link>
+        )}
+        {election.status !== 'Upcoming' && (
+          <Link to={`/elections/${election.electionId}/results`} className="flex-1">
+            <Button variant="secondary" className="w-full">
+              <BarChart3 className="h-4 w-4" />
+              Results
+            </Button>
+          </Link>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 export default function ElectionsPage() {
   const [elections, setElections] = useState([]);
@@ -46,45 +110,7 @@ export default function ElectionsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {elections.map((election) => (
-          <Card key={election.electionId} className="flex flex-col gap-4 p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h2 className="font-semibold text-slate-900 dark:text-white">{election.title}</h2>
-                <p className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                  <CalendarClock className="h-3.5 w-3.5" />
-                  {new Date(election.startDate).toLocaleDateString()} –{' '}
-                  {new Date(election.endDate).toLocaleDateString()}
-                </p>
-              </div>
-              <Badge status={election.status} />
-            </div>
-
-            {election.hasVoted && (
-              <p className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" />
-                You voted
-              </p>
-            )}
-
-            <div className="mt-auto flex gap-2">
-              {election.status === 'Active' && !election.hasVoted && (
-                <Link to={`/elections/${election.electionId}/ballot`} className="flex-1">
-                  <Button className="w-full">
-                    <Vote className="h-4 w-4" />
-                    Vote
-                  </Button>
-                </Link>
-              )}
-              {election.status !== 'Upcoming' && (
-                <Link to={`/elections/${election.electionId}/results`} className="flex-1">
-                  <Button variant="secondary" className="w-full">
-                    <BarChart3 className="h-4 w-4" />
-                    Results
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </Card>
+          <ElectionCard key={election.electionId} election={election} />
         ))}
       </div>
     </div>

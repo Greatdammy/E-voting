@@ -1,14 +1,18 @@
 import { Line, LineChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { TrendingUp } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Card from './ui/Card';
+import Spinner from './ui/Spinner';
 import { useDarkMode } from '../hooks/useDarkMode';
 
-// Reuses the same indigo/slate pair already validated (via the dataviz
-// skill's validate_palette.js) against these chart surfaces in
-// ResultsChart.jsx — projected segment takes the accent per the stat-tile
-// trend spec ("current period in the accent"), observed history is the
-// de-emphasis hue.
-const accentColor = { light: '#4f46e5', dark: '#6366f1' };
+// Fuchsia is the shared "AI accent" — used only here, on integrity alerts,
+// and on the elections-list insight chip, so it reads as one consistent
+// signal for "this is AI-derived, not the official count," never the
+// brand's indigo/violet. Contrast checked by hand against these same card
+// surfaces (#ffffff light / #0f172a dark) per the dataviz skill's WCAG
+// text-contrast rule for a lone accent color (not a categorical palette):
+// fuchsia-600 on white ≈ 4.7:1, fuchsia-400 on #0f172a ≈ 7.2:1 — both clear
+// the 4.5:1 normal-text floor. Observed history keeps the de-emphasis hue.
+const accentColor = { light: '#c026d3', dark: '#e879f9' };
 const mutedColor = { light: '#94a3b8', dark: '#64748b' };
 const cardSurfaceColor = { light: '#ffffff', dark: '#0f172a' };
 
@@ -48,7 +52,7 @@ export default function TurnoutForecastCard({ history, forecast, endDate }) {
     <Card className="p-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-          <TrendingUp className="h-4 w-4" />
+          <Sparkles className="h-4 w-4 text-fuchsia-600 dark:text-fuchsia-400" />
           Turnout Forecast
         </div>
         {forecast && (
@@ -58,11 +62,7 @@ export default function TurnoutForecastCard({ history, forecast, endDate }) {
         )}
       </div>
 
-      {!forecast && (
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          Gathering data for a turnout forecast&hellip;
-        </p>
-      )}
+      {!forecast && <Spinner variant="ai" label="Gathering data for a turnout forecast…" className="mt-2" />}
 
       {forecast && (
         <>
@@ -73,7 +73,7 @@ export default function TurnoutForecastCard({ history, forecast, endDate }) {
             Projected by {new Date(endDate).toLocaleDateString()}
           </p>
 
-          <div className="mt-4 h-24 text-indigo-600 dark:text-indigo-400">
+          <div className="mt-4 h-24 text-fuchsia-600 dark:text-fuchsia-400">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={buildChartData(history, forecast, endDate)} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
                 <Tooltip

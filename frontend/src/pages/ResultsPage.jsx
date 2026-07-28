@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Radio, Trophy } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Radio, ShieldAlert, Trophy } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { createResultsConnection } from '../signalr/resultsConnection';
 import ResultsChart from '../components/ResultsChart';
@@ -40,6 +41,7 @@ function Leaderboard({ tally, totalVotes }) {
 
 export default function ResultsPage() {
   const { id } = useParams();
+  const { role } = useSelector((state) => state.auth);
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [live, setLive] = useState(false);
@@ -128,12 +130,23 @@ export default function ResultsPage() {
             {results.status} · {results.totalVotes} total votes
           </p>
         </div>
-        {live && (
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-            <Radio className="h-3.5 w-3.5 animate-pulse" />
-            Live
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {(role === 'Administrator' || role === 'ElectionOfficer') && (
+            <Link
+              to={`/admin/elections/${id}/integrity`}
+              className="flex items-center gap-1.5 rounded-full bg-fuchsia-100 px-2.5 py-1 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-200 dark:bg-fuchsia-500/10 dark:text-fuchsia-400 dark:hover:bg-fuchsia-500/20"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Monitored by an automated integrity check
+            </Link>
+          )}
+          {live && (
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <Radio className="h-3.5 w-3.5 animate-pulse" />
+              Live
+            </span>
+          )}
+        </div>
       </div>
 
       <Card className="p-5">

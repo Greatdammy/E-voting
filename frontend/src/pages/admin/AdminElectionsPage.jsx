@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarPlus, ListChecks, Users2 } from 'lucide-react';
+import { CalendarPlus, ListChecks, ShieldAlert, Users2 } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import { extractErrorMessage } from '../../api/extractErrorMessage';
 import Card from '../../components/ui/Card';
@@ -129,12 +129,20 @@ export default function AdminElectionsPage() {
                     <Badge status={election.status} />
                   </div>
                 </div>
-                <Link to={`/admin/elections/${election.electionId}/candidates`}>
-                  <Button variant="secondary">
-                    <Users2 className="h-4 w-4" />
-                    Manage candidates
-                  </Button>
-                </Link>
+                <div className="flex gap-2">
+                  <Link to={`/admin/elections/${election.electionId}/candidates`}>
+                    <Button variant="secondary">
+                      <Users2 className="h-4 w-4" />
+                      Manage candidates
+                    </Button>
+                  </Link>
+                  <Link to={`/admin/elections/${election.electionId}/integrity`}>
+                    <Button variant="secondary">
+                      <ShieldAlert className="h-4 w-4" />
+                      Integrity
+                    </Button>
+                  </Link>
+                </div>
               </Card>
             </li>
           ))}
