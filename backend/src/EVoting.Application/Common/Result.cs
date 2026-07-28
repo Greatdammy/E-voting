@@ -9,7 +9,8 @@ public enum AppError
     NotFound,
     ElectionNotActive,
     InvalidCandidate,
-    AlreadyVoted
+    AlreadyVoted,
+    ElectionHasVotes
 }
 
 public class Result<T>

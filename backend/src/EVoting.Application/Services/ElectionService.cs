@@ -12,6 +12,7 @@ public class ElectionService : IElectionService
     private readonly ICandidateRepository _candidateRepository;
     private readonly IVoterElectionStatusRepository _voterElectionStatusRepository;
     private readonly IVoteRepository _voteRepository;
+    private readonly IAuditLogService _auditLogService;
     private readonly IUnitOfWork _unitOfWork;
 
     public ElectionService(
@@ -19,12 +20,14 @@ public class ElectionService : IElectionService
         ICandidateRepository candidateRepository,
         IVoterElectionStatusRepository voterElectionStatusRepository,
         IVoteRepository voteRepository,
+        IAuditLogService auditLogService,
         IUnitOfWork unitOfWork)
     {
         _electionRepository = electionRepository;
         _candidateRepository = candidateRepository;
         _voterElectionStatusRepository = voterElectionStatusRepository;
         _voteRepository = voteRepository;
+        _auditLogService = auditLogService;
         _unitOfWork = unitOfWork;
     }
 
@@ -128,6 +131,27 @@ public class ElectionService : IElectionService
             Tally = tally,
             TotalVotes = tally.Sum(t => t.VoteCount)
         });
+    }
+
+    public async Task<Result<bool>> DeleteElectionAsync(Guid electionId, Guid deletedBy)
+    {
+        var election = await _electionRepository.GetByIdAsync(electionId);
+        if (election is null)
+        {
+            return Result<bool>.Failure(AppError.NotFound, "Election not found.");
+        }
+
+        var hasVotes = await _voteRepository.HasVotesAsync(electionId);
+        if (hasVotes)
+        {
+            return Result<bool>.Failure(AppError.ElectionHasVotes, "This election has votes cast and cannot be deleted.");
+        }
+
+        _electionRepository.Remove(election);
+        await _auditLogService.LogAsync(deletedBy, $"Admin deleted election {election.Title} ({election.ElectionId})");
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
     private static ElectionResponseDto ToElectionResponseDto(Election election) => new()

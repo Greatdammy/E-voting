@@ -19,6 +19,11 @@ public class VoteRepository : IVoteRepository
         await _context.Votes.AddAsync(vote);
     }
 
+    public Task<bool> HasVotesAsync(Guid electionId)
+    {
+        return _context.Votes.AnyAsync(v => v.ElectionId == electionId);
+    }
+
     public Task<List<CandidateTallyDto>> GetTallyAsync(Guid electionId)
     {
         return _context.Candidates

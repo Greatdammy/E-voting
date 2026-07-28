@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarPlus, ListChecks, ShieldAlert, Users2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { CalendarPlus, ListChecks, ShieldAlert, Trash2, Users2 } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import { extractErrorMessage } from '../../api/extractErrorMessage';
 import Card from '../../components/ui/Card';
@@ -10,6 +11,7 @@ import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 
 export default function AdminElectionsPage() {
+  const { role } = useSelector((state) => state.auth);
   const [elections, setElections] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,19 @@ export default function AdminElectionsPage() {
       setFormError(extractErrorMessage(err, 'Could not create election.'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (electionId) => {
+    if (!window.confirm('Delete this election? This cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await axiosInstance.delete(`/admin/elections/${electionId}`);
+      loadElections();
+    } catch (err) {
+      setError(extractErrorMessage(err, 'Could not delete election.'));
     }
   };
 
@@ -142,6 +157,17 @@ export default function AdminElectionsPage() {
                       Integrity
                     </Button>
                   </Link>
+                  {role === 'Administrator' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                      onClick={() => handleDelete(election.electionId)}
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </Card>
             </li>

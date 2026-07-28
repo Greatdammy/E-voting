@@ -27,4 +27,9 @@ public class ElectionRepository : IElectionRepository
     {
         await _context.Elections.AddAsync(election);
     }
+
+    public void Remove(Election election)
+    {
+        _context.Elections.Remove(election);
+    }
 }

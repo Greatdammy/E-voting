@@ -6,6 +6,7 @@ namespace EVoting.Application.Interfaces;
 public interface IVoteRepository
 {
     Task AddAsync(Vote vote);
+    Task<bool> HasVotesAsync(Guid electionId);
     Task<List<CandidateTallyDto>> GetTallyAsync(Guid electionId);
     Task<List<DateTime>> GetVoteTimestampsAsync(Guid electionId, DateTime sinceUtc);
 }

@@ -132,6 +132,14 @@ public class AdminController : ControllerBase
         return result.Succeeded ? NoContent() : MapError(result.Error, result.ErrorMessage);
     }
 
+    [HttpDelete("elections/{electionId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Administrator))]
+    public async Task<IActionResult> DeleteElection(Guid electionId)
+    {
+        var result = await _electionService.DeleteElectionAsync(electionId, CurrentUserId());
+        return result.Succeeded ? NoContent() : MapError(result.Error, result.ErrorMessage);
+    }
+
     private Guid CurrentUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     private static ModelStateDictionary BuildModelState(FluentValidation.Results.ValidationResult validation)
@@ -152,6 +160,7 @@ public class AdminController : ControllerBase
             AppError.DuplicateEmail => Conflict(new { message }),
             AppError.NotFound => NotFound(new { message }),
             AppError.ElectionNotActive => Conflict(new { message }),
+            AppError.ElectionHasVotes => Conflict(new { message }),
             _ => BadRequest(new { message })
         };
     }
