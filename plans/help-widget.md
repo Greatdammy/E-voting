@@ -39,8 +39,30 @@ and is labeled "Help" in the UI, not "Assistant" or "AI."
 No new npm dependency (lucide-react already provides `HelpCircle`/`X`/`Send`).
 No backend files touched.
 
+## Follow-up: matching was too narrow (2026-07-28, same day)
+First version used "first topic with any single keyword hit" over ~7 topics
+with only a handful of exact phrases each — in practice, almost any
+naturally-phrased question missed and fell through to the fallback, which
+read as "gives the same answer for everything." Reworked `findAnswer` to:
+- **Score every topic** (count of matching keyword phrases) and return the
+  highest-scoring one, instead of stopping at the first topic with any hit
+  — so array order no longer silently decides borderline matches.
+- **Normalize both the message and each keyword identically** (lowercase,
+  strip punctuation) before comparing — the first punctuation-stripping
+  attempt only normalized the message, which silently broke every keyword
+  containing an apostrophe (e.g. "can't log in"); caught and fixed before
+  it shipped.
+- **Much broader keyword lists per topic**, plus two new topics (admin/
+  officer roles; a greeting/"what can you do" catch-all) to reduce how
+  often ordinary openers hit the fallback.
+This remains a ceiling, not a fix to "real" understanding — it's still
+substring/keyword scoring, not NLU, and stays that way deliberately (no
+paid API). Told the user this plainly rather than implying otherwise.
+
 ## Verification
-- `npm test`: 24/24 passing (up from 20/20 — 4 new tests, no regressions).
+- `npm test`: 26/26 passing (2 new tests added specifically for the
+  expanded-matching behavior — a non-exact phrasing and a greeting — on top
+  of the original 24).
 - `npm run build`: succeeds.
 - Manual check on `/login` before authenticating: not yet performed by
   either party — recommended before fully trusting the "helps before login"

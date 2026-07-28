@@ -42,4 +42,22 @@ describe('HelpWidget', () => {
 
     expect(screen.getByText(/didn't understand/i)).toBeInTheDocument();
   });
+
+  it('matches a natural phrasing that is not an exact keyword, via scoring', () => {
+    render(<HelpWidget />);
+
+    openWidget();
+    ask("what's the confirmation hash for?");
+
+    expect(screen.getByText(/proves your vote was recorded/i)).toBeInTheDocument();
+  });
+
+  it('responds to a greeting instead of falling back', () => {
+    render(<HelpWidget />);
+
+    openWidget();
+    ask('hello, what can you do?');
+
+    expect(screen.getByText(/ask me about registering/i)).toBeInTheDocument();
+  });
 });
