@@ -59,7 +59,13 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
+            // Port 465 is implicit TLS (the connection is TLS from the first
+            // byte); 587 and everything else is STARTTLS (connect in the
+            // clear, then upgrade). Hardcoding StartTls broke port 465 - some
+            // networks block 587 outbound but allow 465, so the option has to
+            // track whichever port is actually configured.
+            var secureOption = _port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            await client.ConnectAsync(_host, _port, secureOption);
             await client.AuthenticateAsync(_username, _password);
             await client.SendAsync(message);
         }
