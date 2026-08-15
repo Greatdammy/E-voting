@@ -1,3 +1,4 @@
+using EVoting.Application.Interfaces;
 using EVoting.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -11,6 +12,7 @@ namespace EVoting.IntegrationTests;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    public TestEmailService EmailService { get; } = new();
 
     public CustomWebApplicationFactory()
     {
@@ -43,6 +45,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             }
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
+
+            var emailDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
+            if (emailDescriptor is not null)
+            {
+                services.Remove(emailDescriptor);
+            }
+
+            services.AddSingleton<IEmailService>(EmailService);
 
             using var scope = services.BuildServiceProvider().CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();

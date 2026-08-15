@@ -10,7 +10,13 @@ public enum AppError
     ElectionNotActive,
     InvalidCandidate,
     AlreadyVoted,
-    ElectionHasVotes
+    ElectionHasVotes,
+    OtpNotFound,
+    OtpExpired,
+    OtpInvalid,
+    OtpAttemptsExceeded,
+    OtpRequestCooldown,
+    OtpRequestLimitExceeded
 }
 
 public class Result<T>

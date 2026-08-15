@@ -6,6 +6,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace EVoting.API.Controllers;
 
@@ -15,15 +16,18 @@ public class ElectionsController : ControllerBase
 {
     private readonly IElectionService _electionService;
     private readonly IVoteService _voteService;
+    private readonly IOtpService _otpService;
     private readonly IValidator<CastVoteRequestDto> _castVoteValidator;
 
     public ElectionsController(
         IElectionService electionService,
         IVoteService voteService,
+        IOtpService otpService,
         IValidator<CastVoteRequestDto> castVoteValidator)
     {
         _electionService = electionService;
         _voteService = voteService;
+        _otpService = otpService;
         _castVoteValidator = castVoteValidator;
     }
 
@@ -40,6 +44,15 @@ public class ElectionsController : ControllerBase
     public async Task<IActionResult> GetBallot(Guid electionId)
     {
         var result = await _electionService.GetBallotAsync(electionId, CurrentUserId());
+        return result.Succeeded ? Ok(result.Value) : MapError(result.Error, result.ErrorMessage);
+    }
+
+    [HttpPost("{electionId:guid}/otp/request")]
+    [Authorize(Roles = "Voter")]
+    [EnableRateLimiting("AuthPolicy")]
+    public async Task<IActionResult> RequestOtp(Guid electionId)
+    {
+        var result = await _otpService.RequestOtpAsync(CurrentUserId(), electionId);
         return result.Succeeded ? Ok(result.Value) : MapError(result.Error, result.ErrorMessage);
     }
 
@@ -81,6 +94,12 @@ public class ElectionsController : ControllerBase
             AppError.ElectionNotActive => Conflict(new { message }),
             AppError.AlreadyVoted => Conflict(new { message }),
             AppError.InvalidCandidate => BadRequest(new { message }),
+            AppError.OtpNotFound => BadRequest(new { message }),
+            AppError.OtpExpired => BadRequest(new { message }),
+            AppError.OtpInvalid => BadRequest(new { message }),
+            AppError.OtpAttemptsExceeded => BadRequest(new { message }),
+            AppError.OtpRequestCooldown => StatusCode(StatusCodes.Status429TooManyRequests, new { message }),
+            AppError.OtpRequestLimitExceeded => StatusCode(StatusCodes.Status429TooManyRequests, new { message }),
             _ => BadRequest(new { message })
         };
     }

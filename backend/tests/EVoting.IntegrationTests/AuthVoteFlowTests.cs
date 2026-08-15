@@ -79,7 +79,24 @@ public class AuthVoteFlowTests : IClassFixture<CustomWebApplicationFactory>
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.Token);
 
-        var voteResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId });
+        // Voting is gated on an OTP now: submitting without one must fail...
+        var voteWithoutOtpResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId, otpCode = "" });
+        Assert.Equal(HttpStatusCode.BadRequest, voteWithoutOtpResponse.StatusCode);
+
+        // ...requesting one emails a code (captured by the TestEmailService double)...
+        var otpRequestResponse = await client.PostAsync($"/api/elections/{electionId}/otp/request", null);
+        Assert.Equal(HttpStatusCode.OK, otpRequestResponse.StatusCode);
+        var otpRequest = await otpRequestResponse.Content.ReadFromJsonAsync<RequestOtpResponseDto>();
+        Assert.NotNull(otpRequest);
+        Assert.Contains("***", otpRequest!.MaskedEmail);
+
+        var code = _factory.EmailService.GetLastCode(email);
+
+        // ...and a wrong code is rejected without spending the real one.
+        var wrongCodeResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId, otpCode = "000000" });
+        Assert.Equal(HttpStatusCode.BadRequest, wrongCodeResponse.StatusCode);
+
+        var voteResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId, otpCode = code });
         Assert.Equal(HttpStatusCode.OK, voteResponse.StatusCode);
         var vote = await voteResponse.Content.ReadFromJsonAsync<CastVoteResponseDto>();
         Assert.NotNull(vote);
@@ -94,7 +111,8 @@ public class AuthVoteFlowTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(1, results!.TotalVotes);
         Assert.Contains(results.Tally, t => t.CandidateId == candidateId && t.VoteCount == 1);
 
-        var secondVoteResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId });
+        // The spent code can't be replayed even against the (now-failing) second vote attempt.
+        var secondVoteResponse = await client.PostAsJsonAsync($"/api/elections/{electionId}/vote", new { candidateId, otpCode = code });
         Assert.Equal(HttpStatusCode.Conflict, secondVoteResponse.StatusCode);
     }
 }

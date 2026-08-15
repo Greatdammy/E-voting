@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CheckCircle2, Vote } from 'lucide-react';
+import { CheckCircle2, Mail, Vote } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { extractErrorMessage } from '../api/extractErrorMessage';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
+import OtpInput from '../components/ui/OtpInput';
+
+const RESEND_COOLDOWN_MS = 60_000;
 
 export default function BallotPage() {
   const { id } = useParams();
@@ -13,7 +16,12 @@ export default function BallotPage() {
   const [selectedCandidateId, setSelectedCandidateId] = useState('');
   const [error, setError] = useState('');
   const [confirmation, setConfirmation] = useState(null);
+  const [otpInfo, setOtpInfo] = useState(null); // { expiresAt, maskedEmail }
+  const [otpCode, setOtpCode] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resendAvailableAt, setResendAvailableAt] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     axiosInstance
@@ -22,10 +30,40 @@ export default function BallotPage() {
       .catch((err) => setError(extractErrorMessage(err, 'Could not load the ballot.')));
   }, [id]);
 
+  useEffect(() => {
+    if (!otpInfo) {
+      return undefined;
+    }
+
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [otpInfo]);
+
+  const requestCode = async () => {
+    if (!selectedCandidateId) {
+      setError('Select a candidate before requesting a code.');
+      return;
+    }
+
+    setSendingCode(true);
+    setError('');
+
+    try {
+      const response = await axiosInstance.post(`/elections/${id}/otp/request`);
+      setOtpInfo({ expiresAt: response.data.expiresAt, maskedEmail: response.data.maskedEmail });
+      setResendAvailableAt(Date.now() + RESEND_COOLDOWN_MS);
+      setOtpCode('');
+    } catch (err) {
+      setError(extractErrorMessage(err, 'Could not send a verification code.'));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!selectedCandidateId) {
-      setError('Select a candidate before submitting.');
+    if (otpCode.length !== 6) {
+      setError('Enter the 6-digit code sent to your email.');
       return;
     }
 
@@ -34,7 +72,8 @@ export default function BallotPage() {
 
     try {
       const response = await axiosInstance.post(`/elections/${id}/vote`, {
-        candidateId: selectedCandidateId
+        candidateId: selectedCandidateId,
+        otpCode
       });
       setConfirmation(response.data);
     } catch (err) {
@@ -91,8 +130,51 @@ export default function BallotPage() {
     return <Spinner label="Loading ballot..." />;
   }
 
+  // Stage 2: a code has been requested - verify it and submit the vote.
+  if (otpInfo) {
+    const resendLocked = resendAvailableAt !== null && now < resendAvailableAt;
+    const resendSecondsLeft = resendLocked ? Math.ceil((resendAvailableAt - now) / 1000) : 0;
+    const expiresInSeconds = Math.max(0, Math.ceil((new Date(otpInfo.expiresAt).getTime() - now) / 1000));
+
+    return (
+      <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Enter your verification code</h1>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <Mail className="h-4 w-4" />
+            Sent to {otpInfo.maskedEmail}
+            {expiresInSeconds > 0 ? ` · expires in ${Math.ceil(expiresInSeconds / 60)} min` : ' · expired'}
+          </p>
+        </div>
+
+        <OtpInput id="otp-code" value={otpCode} onChange={setOtpCode} disabled={submitting} />
+
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={submitting}>
+            <Vote className="h-4 w-4" />
+            {submitting ? 'Submitting...' : 'Submit vote'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={resendLocked || sendingCode}
+            onClick={requestCode}
+          >
+            {sendingCode ? 'Sending...' : resendLocked ? `Resend code (${resendSecondsLeft}s)` : 'Resend code'}
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => setOtpInfo(null)}>
+            Change candidate
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
+  // Stage 1: pick a candidate, then request a code.
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{ballot.title}</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{ballot.description}</p>
@@ -122,10 +204,10 @@ export default function BallotPage() {
 
       {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
-      <Button type="submit" disabled={submitting}>
-        <Vote className="h-4 w-4" />
-        {submitting ? 'Submitting...' : 'Submit vote'}
+      <Button type="button" onClick={requestCode} disabled={sendingCode}>
+        <Mail className="h-4 w-4" />
+        {sendingCode ? 'Sending code...' : 'Send verification code'}
       </Button>
-    </form>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ public class VoteService : IVoteService
     private readonly IConfirmationHashService _confirmationHashService;
     private readonly IResultsBroadcaster _resultsBroadcaster;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOtpService _otpService;
 
     public VoteService(
         IElectionRepository electionRepository,
@@ -25,7 +26,8 @@ public class VoteService : IVoteService
         IVoterAnonymizer voterAnonymizer,
         IConfirmationHashService confirmationHashService,
         IResultsBroadcaster resultsBroadcaster,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOtpService otpService)
     {
         _electionRepository = electionRepository;
         _candidateRepository = candidateRepository;
@@ -35,6 +37,7 @@ public class VoteService : IVoteService
         _confirmationHashService = confirmationHashService;
         _resultsBroadcaster = resultsBroadcaster;
         _unitOfWork = unitOfWork;
+        _otpService = otpService;
     }
 
     public async Task<Result<CastVoteResponseDto>> CastVoteAsync(Guid electionId, Guid voterId, CastVoteRequestDto request)
@@ -61,6 +64,15 @@ public class VoteService : IVoteService
         if (existingStatus?.HasVoted == true)
         {
             return Result<CastVoteResponseDto>.Failure(AppError.AlreadyVoted, "You have already voted in this election.");
+        }
+
+        // Checked last, right before the transaction: it's the only check
+        // that mutates state (attempt count / consumption), so cheap
+        // read-only checks above should fail first and leave the code alone.
+        var otpVerification = await _otpService.VerifyAndConsumeAsync(voterId, electionId, request.OtpCode);
+        if (!otpVerification.Succeeded)
+        {
+            return Result<CastVoteResponseDto>.Failure(otpVerification.Error, otpVerification.ErrorMessage!);
         }
 
         if (election.Status != status)
